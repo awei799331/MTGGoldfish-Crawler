@@ -1,6 +1,6 @@
 import scrapy
 import csv
-from scrapy.exporters import CsvItemExporter
+import os
 
 class priceSpider(scrapy.Spider):
     name = "goldfishSpider"
@@ -22,16 +22,16 @@ class priceSpider(scrapy.Spider):
 
     def parse(self, response):
         yeet = response.xpath("//script[contains(., 'MTGGoldfishDygraph.bindTabs')]/text()").extract()
+        print(response.url)
         with open('temp_file.txt', 'w') as f:
             for item in yeet:
                 f.write("%s\n" % item)
             f.close()
-            self.parse_helper()
-        yield {
-            "data":yeet
-        }
+            temp_name = str(response.url)
+            temp_name = temp_name.replace("https://www.mtggoldfish.com/price/", "").replace("+", "_").replace("/", "-")
+            self.parse_helper(temp_name)
 
-    def parse_helper(self):
+    def parse_helper(self, name):
         lines = []
         with open('temp_file.txt', 'r') as textf:
             content = textf.readlines()
@@ -48,6 +48,10 @@ class priceSpider(scrapy.Spider):
 
             del content
 
-        with open("output.csv", "w") as output:
+        cur_path = os.path.dirname(__file__)
+        #print("\n" + os.path.dirname(os.path.dirname(cur_path)) + "\n")
+        new_path = os.path.dirname(os.path.dirname(cur_path)) + '\\output\\' + name + '.csv'
+        #print("\n" + new_path + "\n")
+        with open(new_path, "w") as output:
             for x in lines:
                 output.write(x.replace(" ", "") + '\n')
